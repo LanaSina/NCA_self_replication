@@ -1,0 +1,263 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+#install.packages("lattice")
+
+library(Metrics)
+# library(ggplot2)
+library(gplots)
+library(lattice)
+library(countcolors)
+```
+
+
+
+# functions
+
+```{r}
+# Get lower triangle of the correlation matrix
+get_lower_tri<-function(cormat){
+  cormat[upper.tri(cormat)] <- NA
+  return(cormat)
+}
+# Get upper triangle of the correlation matrix
+get_upper_tri <- function(cormat){
+  cormat[lower.tri(cormat)]<- NA
+  return(cormat)
+}
+  
+# calculate the difference between a pattern and its Xth descendant
+# then average for the whole lineage
+# ie sum of the matrix rows div by count(non null entries)
+average_difference<-function(df){
+  # we want df[1,1:end] + df[2, 2:end]
+  n = length(df[,1])
+  d = df[1, ]
+  # sum after moving the row back by one column
+  for (i in c(2:n)){
+    sub_ = df[i,i:n]
+    d = d + c(sub_, rep(0, n-length(sub_)))
+  }
+  
+  # divide by number of non null entries
+  d = d/c(n:1)
+ 
+  return(d)
+}
+```
+
+
+```{r}
+#folder_name = "../replication_egg_2/csv_egg/"
+
+folder_name = "/Users/lana/Desktop/prgm/CSL/DNA-CA/results/alife_2023/fish/csv/1500/"
+# folder_name = "/Users/lana/Desktop/prgm/CSL/DNA-CA/results/replication_fl/csv/"
+
+max_step= 19200
+egg_filename = paste(folder_name, "egg_", max_step,".csv", sep = "")
+fish_filename = paste(folder_name, "fish_", max_step,".csv", sep = "")
+
+df_e = read.csv(egg_filename,stringsAsFactors=F, header = FALSE)
+df_f = read.csv(fish_filename,stringsAsFactors=F, header = FALSE)
+
+```
+
+
+```{r}
+# for each egg calculate the difference with others
+n = length(df_e[,1])
+e_differences = matrix(ncol=n, nrow=n)
+
+# row, col
+# advances col by col so generation diff is 1st row
+
+for ( i in c(1:n)){
+  current = as.numeric(df_e[i,])
+  for ( j in c(i:n)){
+    egg = as.numeric(df_e[j,])
+    diff = mse(current, egg)
+    e_differences[i,j] = diff
+  }
+}
+```
+
+```{r}
+# same for phenotype 
+
+n = length(df_f[,1])
+f_differences = matrix(ncol=n, nrow=n)
+
+for ( i in c(1:n)){
+  current = as.numeric(df_f[i,])
+  for ( j in c(i:n)){
+    egg = as.numeric(df_f[j,])
+    diff = mse(current, egg)
+    f_differences[i,j] = diff
+  }
+}
+
+```
+
+```{r}
+pal <- colorRampPalette(c("red", "yellow"), space = "rgb")
+levelplot(t(e_differences), main="DNA MSE", xlab="", ylab="", col.regions=pal(100))#, at=seq(0, max(e_differences), length.out=16))
+# levelplot(e_differences, scales=list(x=list(rot=-90)),main="DNA MSE", xlab="", ylab="", col.regions=pal(100))
+
+
+pal <- colorRampPalette(c("red", "yellow"), space = "rgb")
+levelplot(t(f_differences), main="Phenotype MSE", xlab="", ylab="", col.regions=pal(100))#, at=seq(0, max(e_differences), length.out=16))
+
+```
+
+
+
+```{r}
+# save to file
+fileName = paste(folder_name, "fish_dna_diff_matrix_", max_step, ".csv", sep="")
+write.table(e_differences, fileName, quote=FALSE)
+
+fileName = paste(folder_name, "phenotype_diff_matrix_", max_step, ".csv", sep="")
+write.table(f_differences, fileName, quote=FALSE)
+
+```
+
+```{r}
+# load files
+
+max_step= 19200
+fileName = paste(folder_name, "fish_dna_diff_matrix_", max_step, ".csv", sep="")
+e_differences = data.matrix(read.table(fileName, sep = " "))
+
+fileName = paste(folder_name, "phenotype_diff_matrix_", max_step, ".csv", sep="")
+f_differences = data.matrix(read.table(fileName, sep = " "))
+```
+
+```{r}
+# how about just plot diff from ancestor
+a = e_differences[1,]
+plot(a, xlab = "Generation", ylab = "DNA MSE", cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
+b = f_differences[1,]
+plot(b, xlab = "Generation", ylab = "Phenotype MSE",
+     cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
+plot(x=a, y = b[1:length(b)-1], xlab = "DNA MSE", ylab = "Phenotype MSE",
+     cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
+
+#plot(x=a, y = b, xlab = "DNA MSE", ylab = "Phenotype MSE" )
+
+```
+
+```{r}
+mean_ph_diff = average_difference(f_differences)
+mean_dna_diff = average_difference(e_differences)
+
+plot(mean_ph_diff, xlab = "Xth descendant", ylab = "Average phenotype MSE",
+     cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5) 
+plot(mean_dna_diff, xlab = "Xth descendant", ylab = "Average DNA MSE",
+     cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5) 
+# correlation, genotype-phenotype mapping
+plot(x=mean_dna_diff, y = mean_ph_diff[1:length(mean_ph_diff)-1],
+      xlab = "Average DNA MSE", ylab = "Average phenotype MSE",
+     cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
+
+```
+
+```{r}
+# correlation, genotype-phenotype mapping
+plot(x=t(mean_dna_diff[2:n]), y = t(mean_ph_diff[2:n]))
+```
+
+```{r}
+stats_func <- function(x) c(sum=sum(x), sdev=var(x)) 
+```
+
+```{r}
+#  shift values
+df = f_differences
+n = length(df[,1])
+# sum after moving the row back by one column
+for (i in c(2:n)){
+  sub_ = df[i,i:n]
+  df[i, ] = c(sub_, rep(0, n-length(sub_)))
+}
+
+avg = apply(df, 2, sum)/c(n:1)
+
+# do it again for standard error
+var = rep(0,n)
+for (i in c(1:n)){
+  sub_ = df[1:(n-i),i] - avg[i]
+  var[i] = sum(sub_*sub_)/(n-i+1)
+  var[i] = sqrt(var[i]/(n-i+1))
+}
+
+
+plot(avg)
+plot(var)
+sdev = var
+
+x <- 1:n
+plot(x, avg,
+    ylim=range(c(avg-sdev, avg+sdev)),
+    pch=19,
+    xlab = "Xth descendant", ylab = "Average phenotype MSE",
+    cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5
+)
+# hack: we draw arrows but with very special "arrowheads"
+arrows(x, avg-sdev, x, avg+sdev, length=0.05, angle=90, code=3)
+
+```
+
+
+```{r}
+df_to_img = function(df_vect, h, w){
+  # rgb, a = x[..., :3], clip_by_value(x[..., 3:4], 0.0, 1.0)
+  # return 1.0-a+rgb
+  
+  
+  egg = as.numeric(df_vect[1,])
+  egg = matrix(egg, 16, h*w)
+  egg = t(egg)
+  rgb = egg[1:(h*w), 1:3]
+  a = pmax( 0, pmin( egg[1:(w*h), 4], 1))
+  egg_rgb = rgb + (1.0-a)
+  # at this point it's -1:+1
+  # egg_rgb = (1+egg_rgb)/2
+  egg_rgb = pmax( 0, pmin(egg_rgb, 1))
+  
+  data <- array(data = egg_rgb, dim = c(w,h,3)) #c(w,h,3)
+  
+  # t(data) is not directly possible
+  tdata =  array(data = egg_rgb, dim = c(h,w,3)) #c(w,h,3)
+  for (i in c(1:w)){
+    tdata[,i,] = data[i,,]
+  }
+  
+  plotArrayAsImage(tdata, main = "")
+}
+```
+
+
+
+```{r}
+save = TRUE
+
+output_path = paste(folder_name, "additional_gen/", sep="")
+dir.create(file.path(output_path), showWarnings = FALSE)
+
+for (i in c(80:100)){
+  filename = paste(i, ".png", sep="")
+  if(save){
+    png(paste(output_path, filename, sep=""), units="mm", width=200, height=150, res=300)
+  }
+  df_to_img(df_f[i,], 40 ,40)
+  if(save){
+    dev.off()
+  }
+}
+
+
+```
+

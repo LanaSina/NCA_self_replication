@@ -1,8 +1,8 @@
 # Self-Replication, Spontaneous Mutations, and Exponential Genetic Drift in Neural Cellular Automata
 
-This repository contains the Colab notebook used to run the experiments for the paper "Self-Replication, Spontaneous Mutations, and Exponential Genetic Drift in Neural Cellular Automata" submitted to ALife2023.
+This repository contains the Jupyter notebook used to run the experiments for the paper "Self-Replication, Spontaneous Mutations, and Exponential Genetic Drift in Neural Cellular Automata" submitted to ALife2023.
 
-Open the notebook in Colab and follow the instructions.
+Open the notebook in Colab (direct link in repository, or https://colab.research.google.com/ from the anonymized repository) and follow the instructions.
 
 Videos at: redacted for anonymity
 

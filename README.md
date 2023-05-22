@@ -2,9 +2,9 @@
 
 This repository contains the Jupyter notebook used to run the experiments for the paper "Self-Replication, Spontaneous Mutations, and Exponential Genetic Drift in Neural Cellular Automata" submitted to ALife2023.
 
-Open the notebook in Colab (direct link in repository, or https://colab.research.google.com/ from the anonymized repository) and follow the instructions.
+Open the notebook in Colab (direct link in repository) and follow the instructions.
 
-Videos at: redacted for anonymity
+Videos at https://youtube.com/playlist?list=PLYuu1RcSnrYRhophmfolv_lmx7Qz8AP1P
 
 Bacteria emoji self-replication with transplant:
 

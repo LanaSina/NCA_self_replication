@@ -5,7 +5,6 @@ output: html_notebook
 
 ```{r}
 #install.packages("lattice")
-
 library(Metrics)
 # library(ggplot2)
 library(gplots)
@@ -15,7 +14,7 @@ library(countcolors)
 
 
 
-# functions
+Utility functions, please run before analysis
 
 ```{r}
 # Get lower triangle of the correlation matrix
@@ -50,12 +49,16 @@ average_difference<-function(df){
 ```
 
 
+Read data from file
+
 ```{r}
-#folder_name = "../replication_egg_2/csv_egg/"
 
-folder_name = "/Users/lana/Desktop/prgm/CSL/DNA-CA/results/alife_2023/fish/csv/1500/"
-# folder_name = "/Users/lana/Desktop/prgm/CSL/DNA-CA/results/replication_fl/csv/"
+# download data from https://figshare.com/projects/Self-replicating_Neural_Cellular_Automata/167582, 
+# or run experiments from https://github.com/LanaSina/NCA_self_replication/tree/main
+# replace with correct folder
+folder_name = "../alife_2023/fish/csv/1500/"
 
+# sorry, no config file
 max_step= 19200
 egg_filename = paste(folder_name, "egg_", max_step,".csv", sep = "")
 fish_filename = paste(folder_name, "fish_", max_step,".csv", sep = "")
@@ -66,6 +69,8 @@ df_f = read.csv(fish_filename,stringsAsFactors=F, header = FALSE)
 ```
 
 
+Calculate DNA drift
+
 ```{r}
 # for each egg calculate the difference with others
 n = length(df_e[,1])
@@ -73,7 +78,6 @@ e_differences = matrix(ncol=n, nrow=n)
 
 # row, col
 # advances col by col so generation diff is 1st row
-
 for ( i in c(1:n)){
   current = as.numeric(df_e[i,])
   for ( j in c(i:n)){
@@ -84,9 +88,10 @@ for ( i in c(1:n)){
 }
 ```
 
+Calculate phenotype drift
+
 ```{r}
 # same for phenotype 
-
 n = length(df_f[,1])
 f_differences = matrix(ncol=n, nrow=n)
 
@@ -101,18 +106,20 @@ for ( i in c(1:n)){
 
 ```
 
+
+Plot drfit heatmap
+
 ```{r}
 pal <- colorRampPalette(c("red", "yellow"), space = "rgb")
-levelplot(t(e_differences), main="DNA MSE", xlab="", ylab="", col.regions=pal(100))#, at=seq(0, max(e_differences), length.out=16))
+levelplot(t(e_differences), main="DNA MSE", xlab="", ylab="", col.regions=pal(100))
 # levelplot(e_differences, scales=list(x=list(rot=-90)),main="DNA MSE", xlab="", ylab="", col.regions=pal(100))
 
-
 pal <- colorRampPalette(c("red", "yellow"), space = "rgb")
-levelplot(t(f_differences), main="Phenotype MSE", xlab="", ylab="", col.regions=pal(100))#, at=seq(0, max(e_differences), length.out=16))
+levelplot(t(f_differences), main="Phenotype MSE", xlab="", ylab="", col.regions=pal(100))
 
 ```
 
-
+Saving / Loading files
 
 ```{r}
 # save to file
@@ -121,7 +128,6 @@ write.table(e_differences, fileName, quote=FALSE)
 
 fileName = paste(folder_name, "phenotype_diff_matrix_", max_step, ".csv", sep="")
 write.table(f_differences, fileName, quote=FALSE)
-
 ```
 
 ```{r}
@@ -135,8 +141,10 @@ fileName = paste(folder_name, "phenotype_diff_matrix_", max_step, ".csv", sep=""
 f_differences = data.matrix(read.table(fileName, sep = " "))
 ```
 
+
+Plot the difference of each generation relative to generation 0
+
 ```{r}
-# how about just plot diff from ancestor
 a = e_differences[1,]
 plot(a, xlab = "Generation", ylab = "DNA MSE", cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
 b = f_differences[1,]
@@ -145,9 +153,9 @@ plot(b, xlab = "Generation", ylab = "Phenotype MSE",
 plot(x=a, y = b[1:length(b)-1], xlab = "DNA MSE", ylab = "Phenotype MSE",
      cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
 
-#plot(x=a, y = b, xlab = "DNA MSE", ylab = "Phenotype MSE" )
-
 ```
+
+Plot genetic drift and phenotype drift
 
 ```{r}
 mean_ph_diff = average_difference(f_differences)
@@ -172,6 +180,8 @@ plot(x=t(mean_dna_diff[2:n]), y = t(mean_ph_diff[2:n]))
 ```{r}
 stats_func <- function(x) c(sum=sum(x), sdev=var(x)) 
 ```
+
+Plot the drift with error bars (not exactly helpful so not included in paper)
 
 ```{r}
 #  shift values
@@ -201,7 +211,6 @@ sdev = var
 x <- 1:n
 plot(x, avg,
     ylim=range(c(avg-sdev, avg+sdev)),
-    pch=19,
     xlab = "Xth descendant", ylab = "Average phenotype MSE",
     cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5
 )
@@ -210,6 +219,9 @@ arrows(x, avg-sdev, x, avg+sdev, length=0.05, angle=90, code=3)
 
 ```
 
+----- Miscellanous functions
+
+Plot organism image from data array
 
 ```{r}
 df_to_img = function(df_vect, h, w){
@@ -240,6 +252,7 @@ df_to_img = function(df_vect, h, w){
 ```
 
 
+Save image
 
 ```{r}
 save = TRUE
